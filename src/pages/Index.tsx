@@ -48,11 +48,13 @@ const Index = () => {
                   <span className="hidden sm:inline">Admin Dashboard</span>
                   <span className="sm:hidden">Admin</span>
                 </Link>
-                <img 
-                  src={logoDrt} 
-                  alt="Logo DRT" 
-                  className="h-12 md:h-14 w-auto object-contain"
-                />
+                <div className="bg-white rounded-lg p-2">
+                  <img 
+                    src={logoDrt} 
+                    alt="Logo DRT" 
+                    className="h-10 md:h-12 w-auto object-contain"
+                  />
+                </div>
               </div>
             </div>
           </div>

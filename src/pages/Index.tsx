@@ -30,24 +30,7 @@ const Index = () => {
         <header className="bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary-foreground/10 rounded-lg">
-                  <Building2 className="w-8 h-8" />
-                </div>
-                <div>
-                  <h1 className="text-xl md:text-2xl font-bold">Laporan Kerusakan Fasilitas</h1>
-                  <p className="text-sm text-primary-foreground/80">Sistem Pelaporan Pesantren</p>
-                </div>
-              </div>
               <div className="flex items-center gap-4">
-                <Link 
-                  to="/auth" 
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-lg transition-colors text-sm font-medium"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span className="hidden sm:inline">Admin Dashboard</span>
-                  <span className="sm:hidden">Admin</span>
-                </Link>
                 <div className="bg-white rounded-lg p-2 shadow-lg shadow-black/20">
                   <img 
                     src={logoDrt} 
@@ -55,7 +38,19 @@ const Index = () => {
                     className="h-10 md:h-12 w-auto object-contain"
                   />
                 </div>
+                <div>
+                  <h1 className="text-xl md:text-2xl font-bold">Laporan Kerusakan Fasilitas</h1>
+                  <p className="text-sm text-primary-foreground/80">Sistem Pelaporan Pesantren</p>
+                </div>
               </div>
+              <Link 
+                to="/auth" 
+                className="flex items-center gap-2 px-4 py-2 bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-lg transition-colors text-sm font-medium"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span className="hidden sm:inline">Admin Dashboard</span>
+                <span className="sm:hidden">Admin</span>
+              </Link>
             </div>
           </div>
         </header>

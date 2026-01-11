@@ -27,10 +27,9 @@ type FormData = z.infer<typeof formSchema>;
 
 interface DamageReportFormProps {
   onSuccess?: () => void;
-  googleWebhookUrl?: string;
 }
 
-export const DamageReportForm = ({ onSuccess, googleWebhookUrl }: DamageReportFormProps) => {
+export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -103,25 +102,25 @@ export const DamageReportForm = ({ onSuccess, googleWebhookUrl }: DamageReportFo
   };
 
   const sendToGoogleSheets = async (data: FormData, photoUrl: string | null) => {
-    if (!googleWebhookUrl) return;
-
     try {
       const locationLabel = LOCATIONS.find(l => l.value === data.location)?.label || data.location;
       
-      await fetch(googleWebhookUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Call edge function to send to Google Sheets
+      const { error } = await supabase.functions.invoke('send-to-sheets', {
+        body: {
           reporter_name: data.reporter_name,
           damage_description: data.damage_description,
           location: locationLabel,
           photo_url: photoUrl || '',
-          timestamp: new Date().toISOString()
-        })
+          created_at: new Date().toISOString()
+        }
       });
+
+      if (error) {
+        console.error('Failed to send to Google Sheets:', error);
+      } else {
+        console.log('Data sent to Google Sheets successfully');
+      }
     } catch (error) {
       console.error('Failed to send to Google Sheets:', error);
     }

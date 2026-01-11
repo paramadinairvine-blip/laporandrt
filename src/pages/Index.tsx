@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { DamageReportForm } from '@/components/DamageReportForm';
-import { Building2, ShieldCheck, ClipboardList } from 'lucide-react';
+import { Building2, ShieldCheck, ClipboardList, MessageCircle } from 'lucide-react';
 import campusBackground from '@/assets/campus-background.jpg';
 import logoDrt from '@/assets/logo-drt.png';
 
@@ -36,7 +36,7 @@ const Index = () => {
                 </div>
                 <div>
                   <h1 className="text-xl md:text-2xl font-bold">Laporan Kerusakan Fasilitas</h1>
-                  <p className="text-sm text-primary-foreground/80">Sistem Pelaporan Kampus</p>
+                  <p className="text-sm text-primary-foreground/80">Sistem Pelaporan Pesantren</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
@@ -48,7 +48,7 @@ const Index = () => {
                   <span className="hidden sm:inline">Admin Dashboard</span>
                   <span className="sm:hidden">Admin</span>
                 </Link>
-                <div className="bg-white rounded-lg p-2">
+                <div className="bg-white rounded-lg p-2 shadow-lg shadow-black/20">
                   <img 
                     src={logoDrt} 
                     alt="Logo DRT" 
@@ -72,7 +72,7 @@ const Index = () => {
                 Form Pelaporan Kerusakan
               </h2>
               <p className="text-muted-foreground max-w-md mx-auto">
-                Laporkan kerusakan fasilitas kampus dengan mengisi form di bawah ini. 
+                Laporkan kerusakan fasilitas pesantren dengan mengisi form di bawah ini. 
                 Tim kami akan segera menindaklanjuti laporan Anda.
               </p>
             </div>
@@ -84,15 +84,26 @@ const Index = () => {
 
             {/* Footer Info */}
             <div className="mt-8 text-center text-sm text-muted-foreground">
-              <p>Butuh bantuan? Hubungi bagian sarana prasarana kampus.</p>
+              <p>Butuh bantuan? Hubungi bagian sarana prasarana pesantren.</p>
             </div>
           </div>
         </main>
 
         {/* Footer */}
         <footer className="bg-primary/95 text-primary-foreground py-4 backdrop-blur-sm">
-          <div className="container mx-auto px-4 text-center">
-            <p className="text-sm font-medium">@DRT2026</p>
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <p className="text-sm font-medium">@DRT2026</p>
+              <a 
+                href="https://wa.me/6285156526862" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm hover:text-primary-foreground/80 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>085156526862</span>
+              </a>
+            </div>
           </div>
         </footer>
       </div>

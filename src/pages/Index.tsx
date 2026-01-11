@@ -5,8 +5,6 @@ import campusBackground from '@/assets/campus-background.jpg';
 import logoDrt from '@/assets/logo-drt.png';
 
 const Index = () => {
-  // Optional: Add your Google Apps Script webhook URL here
-  const googleWebhookUrl = undefined; // e.g., 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'
 
   return (
     <div className="min-h-screen relative flex flex-col">
@@ -74,7 +72,7 @@ const Index = () => {
 
             {/* Form Card */}
             <div className="form-section">
-              <DamageReportForm googleWebhookUrl={googleWebhookUrl} />
+              <DamageReportForm />
             </div>
 
             {/* Footer Info */}

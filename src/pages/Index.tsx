@@ -1,12 +1,66 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Link } from 'react-router-dom';
+import { DamageReportForm } from '@/components/DamageReportForm';
+import { Building2, ShieldCheck, ClipboardList } from 'lucide-react';
 
 const Index = () => {
+  // Optional: Add your Google Apps Script webhook URL here
+  const googleWebhookUrl = undefined; // e.g., 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="bg-primary text-primary-foreground shadow-lg">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary-foreground/10 rounded-lg">
+                <Building2 className="w-8 h-8" />
+              </div>
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold">Laporan Kerusakan Fasilitas</h1>
+                <p className="text-sm text-primary-foreground/80">Sistem Pelaporan Kampus</p>
+              </div>
+            </div>
+            <Link 
+              to="/auth" 
+              className="flex items-center gap-2 px-4 py-2 bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-lg transition-colors text-sm font-medium"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Admin Dashboard</span>
+              <span className="sm:hidden">Admin</span>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8 md:py-12">
+        <div className="max-w-2xl mx-auto">
+          {/* Info Section */}
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+              <ClipboardList className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+              Form Pelaporan Kerusakan
+            </h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Laporkan kerusakan fasilitas kampus dengan mengisi form di bawah ini. 
+              Tim kami akan segera menindaklanjuti laporan Anda.
+            </p>
+          </div>
+
+          {/* Form Card */}
+          <div className="form-section">
+            <DamageReportForm googleWebhookUrl={googleWebhookUrl} />
+          </div>
+
+          {/* Footer Info */}
+          <div className="mt-8 text-center text-sm text-muted-foreground">
+            <p>Butuh bantuan? Hubungi bagian sarana prasarana kampus.</p>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

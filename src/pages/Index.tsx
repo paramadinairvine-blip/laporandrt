@@ -1,17 +1,34 @@
 import { Link } from 'react-router-dom';
 import { DamageReportForm } from '@/components/DamageReportForm';
 import { Building2, ShieldCheck, ClipboardList } from 'lucide-react';
+import campusBackground from '@/assets/campus-background.jpg';
 
 const Index = () => {
   // Optional: Add your Google Apps Script webhook URL here
   const googleWebhookUrl = undefined; // e.g., 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-primary text-primary-foreground shadow-lg">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen relative">
+      {/* Background Image with Overlay */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${campusBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        {/* Fade overlay for readability */}
+        <div className="absolute inset-0 bg-background/85" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="bg-primary/95 text-primary-foreground shadow-lg backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary-foreground/10 rounded-lg">
                 <Building2 className="w-8 h-8" />
@@ -61,6 +78,7 @@ const Index = () => {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 };

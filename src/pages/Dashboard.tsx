@@ -2,22 +2,26 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LOCATIONS, STATUS_OPTIONS } from '@/lib/constants';
 import { 
   Building2, LogOut, Search, Filter, RefreshCw, Loader2, 
-  ClipboardList, Calendar, MapPin, TrendingUp, Image
+  ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
 interface DamageReport {
   id: string;
@@ -30,9 +34,21 @@ interface DamageReport {
   updated_at: string;
 }
 
+const signupSchema = z.object({
+  fullName: z.string().trim().min(2, 'Nama minimal 2 karakter').max(100, 'Nama terlalu panjang'),
+  email: z.string().trim().email('Email tidak valid').max(255, 'Email terlalu panjang'),
+  password: z.string().min(6, 'Password minimal 6 karakter').max(100, 'Password terlalu panjang'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Password tidak cocok',
+  path: ['confirmPassword'],
+});
+
+type SignupFormData = z.infer<typeof signupSchema>;
+
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, signOut } = useAuth();
+  const { user, isLoading: authLoading, isAdmin, signOut, signUp } = useAuth();
   const { toast } = useToast();
   
   const [reports, setReports] = useState<DamageReport[]>([]);
@@ -40,6 +56,13 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const signupForm = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' }
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -77,6 +100,29 @@ const Dashboard = () => {
   const handleLogout = async () => {
     await signOut();
     navigate('/auth');
+  };
+
+  const handleAddUser = async (data: SignupFormData) => {
+    setIsSubmitting(true);
+    try {
+      const { error } = await signUp(data.email, data.password, data.fullName);
+      if (error) {
+        let message = 'Terjadi kesalahan saat membuat akun';
+        if (error.message.includes('already registered')) {
+          message = 'Email sudah terdaftar';
+        }
+        toast({ title: 'Gagal Membuat Akun', description: message, variant: 'destructive' });
+      } else {
+        toast({ 
+          title: 'Akun Berhasil Dibuat', 
+          description: `Akun untuk ${data.email} telah dibuat.` 
+        });
+        signupForm.reset();
+        setIsAddUserOpen(false);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getLocationLabel = (value: string) => {
@@ -149,17 +195,101 @@ const Dashboard = () => {
               </div>
               <div>
                 <h1 className="text-lg font-bold">Dashboard Admin</h1>
-                <p className="text-xs text-primary-foreground/80">Sistem Pelaporan Kampus</p>
+                <p className="text-xs text-primary-foreground/80">Sistem Pelaporan Pesantren</p>
               </div>
             </Link>
-            <Button 
-              variant="ghost" 
-              onClick={handleLogout}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="text-primary-foreground hover:bg-primary-foreground/10"
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Tambah Akun
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Tambah Akun Baru</DialogTitle>
+                    </DialogHeader>
+                    <Form {...signupForm}>
+                      <form onSubmit={signupForm.handleSubmit(handleAddUser)} className="space-y-4">
+                        <FormField
+                          control={signupForm.control}
+                          name="fullName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nama Lengkap</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nama lengkap" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signupForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="email@pesantren.id" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signupForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Password</FormLabel>
+                              <FormControl>
+                                <Input type="password" placeholder="••••••••" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={signupForm.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Konfirmasi Password</FormLabel>
+                              <FormControl>
+                                <Input type="password" placeholder="••••••••" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                          {isSubmitting ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <UserPlus className="w-4 h-4 mr-2" />
+                          )}
+                          Buat Akun
+                        </Button>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
+              )}
+              <Button 
+                variant="ghost" 
+                onClick={handleLogout}
+                className="text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>

@@ -542,19 +542,24 @@ const Dashboard = () => {
                         </TableCell>
                         {isAdmin && (
                           <TableCell>
-                            {report.status === 'pending' ? (
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                className="text-green-600 border-green-600 hover:bg-green-50"
-                                onClick={() => handleStatusChange(report.id, 'completed')}
-                              >
-                                <CheckCircle className="w-4 h-4 mr-1" />
-                                Tandai Selesai
-                              </Button>
-                            ) : (
-                              <Badge className="bg-green-500 text-white">Selesai</Badge>
-                            )}
+                            <Select 
+                              value={report.status} 
+                              onValueChange={(value: 'pending' | 'completed') => handleStatusChange(report.id, value)}
+                            >
+                              <SelectTrigger className="w-[160px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {STATUS_OPTIONS.map((status) => (
+                                  <SelectItem key={status.value} value={status.value}>
+                                    <span className="flex items-center gap-2">
+                                      <span className={`w-2 h-2 rounded-full ${status.color}`} />
+                                      {status.label}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                         )}
                       </TableRow>

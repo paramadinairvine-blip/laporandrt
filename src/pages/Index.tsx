@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { DamageReportForm } from '@/components/DamageReportForm';
-import { Building2, ShieldCheck, ClipboardList, MessageCircle } from 'lucide-react';
+import { ShieldCheck, ClipboardList, MessageCircle, CheckCircle } from 'lucide-react';
 import campusBackground from '@/assets/campus-background.jpg';
 import logoDrt from '@/assets/logo-drt.png';
 
@@ -41,14 +41,24 @@ const Index = () => {
                   <p className="text-sm text-primary-foreground/80">Sistem Pelaporan Pesantren</p>
                 </div>
               </div>
-              <Link 
-                to="/auth" 
-                className="flex items-center gap-2 px-4 py-2 bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-lg transition-colors text-sm font-medium"
-              >
-                <ShieldCheck className="w-4 h-4" />
-                <span className="hidden sm:inline">Admin Dashboard</span>
-                <span className="sm:hidden">Admin</span>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link 
+                  to="/completed" 
+                  className="flex items-center gap-2 px-4 py-2 bg-green-500/80 hover:bg-green-500 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="hidden sm:inline">Sudah Tertangani</span>
+                  <span className="sm:hidden">Selesai</span>
+                </Link>
+                <Link 
+                  to="/auth" 
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span className="hidden sm:inline">Admin</span>
+                  <span className="sm:hidden">Admin</span>
+                </Link>
+              </div>
             </div>
           </div>
         </header>

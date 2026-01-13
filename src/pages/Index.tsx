@@ -44,12 +44,12 @@ const Index = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Link 
-                  to="/completed" 
+                  to="/reports" 
                   className="flex items-center gap-2 px-4 py-2 bg-primary-foreground/10 hover:bg-primary-foreground/20 rounded-lg transition-colors text-sm font-medium"
                 >
                   <ClipboardList className="w-4 h-4" />
-                  <span className="hidden sm:inline">Sudah Tertangani</span>
-                  <span className="sm:hidden">Selesai</span>
+                  <span className="hidden sm:inline">Report</span>
+                  <span className="sm:hidden">Report</span>
                 </Link>
                 <Link 
                   to="/auth" 

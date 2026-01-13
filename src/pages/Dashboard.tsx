@@ -169,40 +169,34 @@ const Dashboard = () => {
     }
   };
 
-  const handleDeletePhoto = async (reportId: string, photoUrl: string) => {
+  const handleDeleteReport = async (reportId: string, photoUrl: string | null) => {
     try {
-      // Extract file path from URL
-      const urlParts = photoUrl.split('/damage-photos/');
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1];
-        
-        // Delete from storage
-        const { error: storageError } = await supabase.storage
-          .from('damage-photos')
-          .remove([filePath]);
-
-        if (storageError) {
-          console.error('Storage delete error:', storageError);
+      // Delete photo from storage if exists
+      if (photoUrl) {
+        const urlParts = photoUrl.split('/damage-photos/');
+        if (urlParts.length > 1) {
+          const filePath = urlParts[1];
+          await supabase.storage.from('damage-photos').remove([filePath]);
         }
       }
 
-      // Update database to remove photo_url
-      const { error: dbError } = await supabase
+      // Delete report from database
+      const { error } = await supabase
         .from('damage_reports')
-        .update({ photo_url: null })
+        .delete()
         .eq('id', reportId);
 
-      if (dbError) throw dbError;
+      if (error) throw error;
 
       toast({
-        title: 'Foto Dihapus',
-        description: 'Foto berhasil dihapus dari laporan'
+        title: 'Laporan Dihapus',
+        description: 'Laporan berhasil dihapus dari sistem'
       });
       
       fetchReports();
     } catch (error: any) {
       toast({
-        title: 'Gagal Menghapus Foto',
+        title: 'Gagal Menghapus Laporan',
         description: error.message,
         variant: 'destructive'
       });
@@ -538,7 +532,8 @@ const Dashboard = () => {
                       <TableHead>Lokasi</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Foto</TableHead>
-                      {isAdmin && <TableHead>Aksi</TableHead>}
+                      {isAdmin && <TableHead>Ubah Status</TableHead>}
+                      {isAdmin && <TableHead></TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -555,36 +550,24 @@ const Dashboard = () => {
                         <TableCell>{getStatusBadge(report.status)}</TableCell>
                         <TableCell>
                           {report.photo_url ? (
-                            <div className="flex items-center gap-2">
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <Button variant="ghost" size="sm" className="p-0">
-                                    <img 
-                                      src={report.photo_url} 
-                                      alt="Foto kerusakan"
-                                      className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                                    />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-3xl">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="p-0">
                                   <img 
                                     src={report.photo_url} 
                                     alt="Foto kerusakan"
-                                    className="w-full h-auto rounded"
+                                    className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
                                   />
-                                </DialogContent>
-                              </Dialog>
-                              {isAdmin && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleDeletePhoto(report.id, report.photo_url!)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
                                 </Button>
-                              )}
-                            </div>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-3xl">
+                                <img 
+                                  src={report.photo_url} 
+                                  alt="Foto kerusakan"
+                                  className="w-full h-auto rounded"
+                                />
+                              </DialogContent>
+                            </Dialog>
                           ) : (
                             <span className="text-muted-foreground text-sm flex items-center gap-1">
                               <Image className="w-4 h-4" />
@@ -612,6 +595,18 @@ const Dashboard = () => {
                                 ))}
                               </SelectContent>
                             </Select>
+                          </TableCell>
+                        )}
+                        {isAdmin && (
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => handleDeleteReport(report.id, report.photo_url)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </TableCell>
                         )}
                       </TableRow>

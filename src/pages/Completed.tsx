@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LOCATIONS } from '@/lib/constants';
 import { 
   Search, Filter, RefreshCw, Loader2, 
-  CheckCircle, ArrowLeft, Image, ClipboardList
+  CheckCircle, ArrowLeft, Image, LogOut
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -31,6 +32,8 @@ interface DamageReport {
 }
 
 const Completed = () => {
+  const navigate = useNavigate();
+  const { user, isLoading: authLoading, isAdmin, signOut } = useAuth();
   const { toast } = useToast();
   
   const [reports, setReports] = useState<DamageReport[]>([]);
@@ -39,8 +42,16 @@ const Completed = () => {
   const [locationFilter, setLocationFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchReports();
-  }, []);
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchReports();
+    }
+  }, [user]);
 
   const fetchReports = async () => {
     setIsLoading(true);
@@ -64,6 +75,11 @@ const Completed = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
   const getLocationLabel = (value: string) => {
     return LOCATIONS.find(l => l.value === value)?.label || value;
   };
@@ -75,6 +91,14 @@ const Completed = () => {
     const matchesLocation = locationFilter === 'all' || report.location === locationFilter;
     return matchesSearch && matchesLocation;
   });
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative flex flex-col">
@@ -113,14 +137,23 @@ const Completed = () => {
                   <p className="text-sm text-white/80">Daftar kerusakan yang sudah ditangani</p>
                 </div>
               </div>
-              <Link 
-                to="/" 
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm font-medium"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Form Laporan</span>
-                <span className="sm:hidden">Kembali</span>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link 
+                  to="/dashboard" 
+                  className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm font-medium"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleLogout}
+                  className="text-white hover:bg-white/10"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Logout</span>
+                </Button>
+              </div>
             </div>
           </div>
         </header>

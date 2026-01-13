@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LOCATIONS, STATUS_OPTIONS } from '@/lib/constants';
 import { 
   Building2, LogOut, Search, Filter, RefreshCw, Loader2, 
-  ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus
+  ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus, CheckCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -135,15 +135,38 @@ const Dashboard = () => {
     
     const colorMap: Record<string, string> = {
       'pending': 'bg-yellow-500 hover:bg-yellow-600',
-      'in_progress': 'bg-blue-500 hover:bg-blue-600',
       'completed': 'bg-green-500 hover:bg-green-600'
     };
     
     return (
-      <Badge className={`${colorMap[status]} text-white`}>
+      <Badge className={`${colorMap[status] || 'bg-gray-500'} text-white`}>
         {statusConfig.label}
       </Badge>
     );
+  };
+
+  const handleStatusChange = async (reportId: string, newStatus: 'pending' | 'completed') => {
+    try {
+      const { error } = await supabase
+        .from('damage_reports')
+        .update({ status: newStatus })
+        .eq('id', reportId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Status Diperbarui',
+        description: `Laporan berhasil diubah ke ${newStatus === 'completed' ? 'Sudah Tertangani' : 'Belum Tertangani'}`
+      });
+      
+      fetchReports();
+    } catch (error: any) {
+      toast({
+        title: 'Gagal Mengubah Status',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
   };
 
   // Filter reports
@@ -173,7 +196,7 @@ const Dashboard = () => {
   }));
 
   const COLORS = ['#1e40af', '#3b82f6', '#60a5fa'];
-  const STATUS_COLORS = ['#eab308', '#3b82f6', '#22c55e'];
+  const STATUS_COLORS = ['#eab308', '#22c55e'];
 
   if (authLoading) {
     return (
@@ -199,6 +222,14 @@ const Dashboard = () => {
               </div>
             </Link>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/completed')}
+                className="text-primary-foreground hover:bg-primary-foreground/10"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Sudah Tertangani
+              </Button>
               {isAdmin && (
                 <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
                   <DialogTrigger asChild>
@@ -467,6 +498,7 @@ const Dashboard = () => {
                       <TableHead>Lokasi</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Foto</TableHead>
+                      {isAdmin && <TableHead>Aksi</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -508,6 +540,23 @@ const Dashboard = () => {
                             </span>
                           )}
                         </TableCell>
+                        {isAdmin && (
+                          <TableCell>
+                            {report.status === 'pending' ? (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                className="text-green-600 border-green-600 hover:bg-green-50"
+                                onClick={() => handleStatusChange(report.id, 'completed')}
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                Tandai Selesai
+                              </Button>
+                            ) : (
+                              <Badge className="bg-green-500 text-white">Selesai</Badge>
+                            )}
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

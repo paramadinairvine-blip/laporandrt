@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LOCATIONS, STATUS_OPTIONS } from '@/lib/constants';
 import { 
   Building2, LogOut, Search, Filter, RefreshCw, Loader2, 
-  ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus, CheckCircle
+  ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus, CheckCircle, Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -163,6 +163,46 @@ const Dashboard = () => {
     } catch (error: any) {
       toast({
         title: 'Gagal Mengubah Status',
+        description: error.message,
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleDeletePhoto = async (reportId: string, photoUrl: string) => {
+    try {
+      // Extract file path from URL
+      const urlParts = photoUrl.split('/damage-photos/');
+      if (urlParts.length > 1) {
+        const filePath = urlParts[1];
+        
+        // Delete from storage
+        const { error: storageError } = await supabase.storage
+          .from('damage-photos')
+          .remove([filePath]);
+
+        if (storageError) {
+          console.error('Storage delete error:', storageError);
+        }
+      }
+
+      // Update database to remove photo_url
+      const { error: dbError } = await supabase
+        .from('damage_reports')
+        .update({ photo_url: null })
+        .eq('id', reportId);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: 'Foto Dihapus',
+        description: 'Foto berhasil dihapus dari laporan'
+      });
+      
+      fetchReports();
+    } catch (error: any) {
+      toast({
+        title: 'Gagal Menghapus Foto',
         description: error.message,
         variant: 'destructive'
       });
@@ -515,24 +555,36 @@ const Dashboard = () => {
                         <TableCell>{getStatusBadge(report.status)}</TableCell>
                         <TableCell>
                           {report.photo_url ? (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="p-0">
+                            <div className="flex items-center gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="p-0">
+                                    <img 
+                                      src={report.photo_url} 
+                                      alt="Foto kerusakan"
+                                      className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                    />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-3xl">
                                   <img 
                                     src={report.photo_url} 
                                     alt="Foto kerusakan"
-                                    className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                    className="w-full h-auto rounded"
                                   />
+                                </DialogContent>
+                              </Dialog>
+                              {isAdmin && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleDeletePhoto(report.id, report.photo_url!)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
                                 </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-3xl">
-                                <img 
-                                  src={report.photo_url} 
-                                  alt="Foto kerusakan"
-                                  className="w-full h-auto rounded"
-                                />
-                              </DialogContent>
-                            </Dialog>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-muted-foreground text-sm flex items-center gap-1">
                               <Image className="w-4 h-4" />

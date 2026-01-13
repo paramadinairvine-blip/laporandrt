@@ -16,9 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LOCATIONS, STATUS_OPTIONS } from '@/lib/constants';
 import { 
-  Building2, LogOut, Search, Filter, RefreshCw, Loader2, 
+  LogOut, Search, Filter, RefreshCw, Loader2, 
   ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus, CheckCircle, Trash2
 } from 'lucide-react';
+import logoDrt from '@/assets/logo-drt.png';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
@@ -247,8 +248,12 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="p-2 bg-primary-foreground/10 rounded-lg">
-                <Building2 className="w-6 h-6" />
+              <div className="bg-white rounded-lg p-2 shadow-lg shadow-black/20">
+                <img 
+                  src={logoDrt} 
+                  alt="Logo DRT" 
+                  className="h-8 md:h-10 w-auto object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-lg font-bold">Dashboard Admin</h1>

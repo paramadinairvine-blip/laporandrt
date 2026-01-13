@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,11 +11,13 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LOCATIONS } from '@/lib/constants';
 import { 
-  Building2, LogOut, Search, Filter, RefreshCw, Loader2, 
-  CheckCircle, ArrowLeft, Image
+  Search, Filter, RefreshCw, Loader2, 
+  CheckCircle, ArrowLeft, Image, ClipboardList
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
+import campusBackground from '@/assets/campus-background.jpg';
+import logoDrt from '@/assets/logo-drt.png';
 
 interface DamageReport {
   id: string;
@@ -30,8 +31,6 @@ interface DamageReport {
 }
 
 const Completed = () => {
-  const navigate = useNavigate();
-  const { user, isLoading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
   
   const [reports, setReports] = useState<DamageReport[]>([]);
@@ -40,16 +39,8 @@ const Completed = () => {
   const [locationFilter, setLocationFilter] = useState<string>('all');
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    if (user) {
-      fetchReports();
-    }
-  }, [user]);
+    fetchReports();
+  }, []);
 
   const fetchReports = async () => {
     setIsLoading(true);
@@ -73,11 +64,6 @@ const Completed = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/auth');
-  };
-
   const getLocationLabel = (value: string) => {
     return LOCATIONS.find(l => l.value === value)?.label || value;
   };
@@ -90,177 +76,190 @@ const Completed = () => {
     return matchesSearch && matchesLocation;
   });
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-green-600 text-white shadow-lg sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/10 rounded-lg">
-                <CheckCircle className="w-6 h-6" />
+    <div className="min-h-screen relative flex flex-col">
+      {/* Background Image with Overlay */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${campusBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="absolute inset-0 bg-background/85" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 flex-1 flex flex-col">
+        {/* Header */}
+        <header className="bg-green-600/95 text-white shadow-lg backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-white rounded-lg p-2 shadow-lg shadow-black/20">
+                  <img 
+                    src={logoDrt} 
+                    alt="Logo DRT" 
+                    className="h-10 md:h-12 w-auto object-contain"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                    <CheckCircle className="w-6 h-6" />
+                    Laporan Sudah Tertangani
+                  </h1>
+                  <p className="text-sm text-white/80">Daftar kerusakan yang sudah ditangani</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-lg font-bold">Laporan Tertangani</h1>
-                <p className="text-xs text-white/80">Daftar kerusakan yang sudah ditangani</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/dashboard')}
-                className="text-white hover:bg-white/10"
+              <Link 
+                to="/" 
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm font-medium"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Dashboard
-              </Button>
-              <Button 
-                variant="ghost" 
-                onClick={handleLogout}
-                className="text-white hover:bg-white/10"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Form Laporan</span>
+                <span className="sm:hidden">Kembali</span>
+              </Link>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="container mx-auto px-4 py-6">
-        {/* Stats */}
-        <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Tertangani</CardTitle>
-            <CheckCircle className="w-5 h-5 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-foreground">{reports.length}</div>
-          </CardContent>
-        </Card>
-
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari nama pelapor atau deskripsi..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter Lokasi" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Lokasi</SelectItem>
-                  {LOCATIONS.map((loc) => (
-                    <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" onClick={fetchReports} disabled={isLoading}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-6 flex-1">
+          {/* Stats */}
+          <Card className="mb-6 bg-card/95 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Tertangani</CardTitle>
               <CheckCircle className="w-5 h-5 text-green-500" />
-              Laporan Sudah Tertangani
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-foreground">{reports.length}</div>
+            </CardContent>
+          </Card>
+
+          {/* Filters */}
+          <Card className="mb-6 bg-card/95 backdrop-blur-sm">
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari nama pelapor atau deskripsi..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter Lokasi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Lokasi</SelectItem>
+                    {LOCATIONS.map((loc) => (
+                      <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" onClick={fetchReports} disabled={isLoading}>
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
               </div>
-            ) : filteredReports.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Belum ada laporan yang tertangani</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tanggal Lapor</TableHead>
-                      <TableHead>Tanggal Ditangani</TableHead>
-                      <TableHead>Pelapor</TableHead>
-                      <TableHead>Deskripsi</TableHead>
-                      <TableHead>Lokasi</TableHead>
-                      <TableHead>Foto</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredReports.map((report) => (
-                      <TableRow key={report.id}>
-                        <TableCell className="whitespace-nowrap">
-                          {format(new Date(report.created_at), 'dd MMM yyyy, HH:mm', { locale: idLocale })}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {format(new Date(report.updated_at), 'dd MMM yyyy, HH:mm', { locale: idLocale })}
-                        </TableCell>
-                        <TableCell className="font-medium">{report.reporter_name}</TableCell>
-                        <TableCell className="max-w-[300px] truncate">{report.damage_description}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{getLocationLabel(report.location)}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {report.photo_url ? (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" className="p-0">
+            </CardContent>
+          </Card>
+
+          {/* Table */}
+          <Card className="bg-card/95 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                Daftar Laporan Sudah Tertangani
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : filteredReports.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>Belum ada laporan yang tertangani</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Tanggal Lapor</TableHead>
+                        <TableHead>Tanggal Ditangani</TableHead>
+                        <TableHead>Pelapor</TableHead>
+                        <TableHead>Deskripsi</TableHead>
+                        <TableHead>Lokasi</TableHead>
+                        <TableHead>Foto</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredReports.map((report) => (
+                        <TableRow key={report.id}>
+                          <TableCell className="whitespace-nowrap">
+                            {format(new Date(report.created_at), 'dd MMM yyyy, HH:mm', { locale: idLocale })}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {format(new Date(report.updated_at), 'dd MMM yyyy, HH:mm', { locale: idLocale })}
+                          </TableCell>
+                          <TableCell className="font-medium">{report.reporter_name}</TableCell>
+                          <TableCell className="max-w-[300px] truncate">{report.damage_description}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{getLocationLabel(report.location)}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            {report.photo_url ? (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="p-0">
+                                    <img 
+                                      src={report.photo_url} 
+                                      alt="Foto kerusakan"
+                                      className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                    />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-3xl">
                                   <img 
                                     src={report.photo_url} 
                                     alt="Foto kerusakan"
-                                    className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                    className="w-full h-auto rounded"
                                   />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-3xl">
-                                <img 
-                                  src={report.photo_url} 
-                                  alt="Foto kerusakan"
-                                  className="w-full h-auto rounded"
-                                />
-                              </DialogContent>
-                            </Dialog>
-                          ) : (
-                            <span className="text-muted-foreground text-sm flex items-center gap-1">
-                              <Image className="w-4 h-4" />
-                              Tidak ada
-                            </span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+                                </DialogContent>
+                              </Dialog>
+                            ) : (
+                              <span className="text-muted-foreground text-sm flex items-center gap-1">
+                                <Image className="w-4 h-4" />
+                                Tidak ada
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+
+        {/* Footer */}
+        <footer className="bg-green-600/95 text-white py-4 backdrop-blur-sm">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-sm font-medium">@DRT2026</p>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 };

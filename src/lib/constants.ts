@@ -5,9 +5,8 @@ export const LOCATIONS = [
 ] as const;
 
 export const STATUS_OPTIONS = [
-  { value: 'pending', label: 'Belum Ditangani', color: 'bg-warning' },
-  { value: 'in_progress', label: 'Sedang Diproses', color: 'bg-accent' },
-  { value: 'completed', label: 'Selesai', color: 'bg-success' },
+  { value: 'pending', label: 'Belum Tertangani', color: 'bg-yellow-500' },
+  { value: 'completed', label: 'Sudah Tertangani', color: 'bg-green-500' },
 ] as const;
 
 export type LocationType = typeof LOCATIONS[number]['value'];

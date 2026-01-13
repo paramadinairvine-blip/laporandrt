@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import { DamageReportForm } from '@/components/DamageReportForm';
-import { ShieldCheck, ClipboardList, MessageCircle } from 'lucide-react';
+import { ShieldCheck, ClipboardList } from 'lucide-react';
 import campusBackground from '@/assets/campus-background.jpg';
 import logoDrt from '@/assets/logo-drt.png';
+import whatsappIcon from '@/assets/whatsapp-icon.png';
 
 const Index = () => {
 
@@ -98,12 +99,12 @@ const Index = () => {
             <div className="flex flex-col items-center gap-3">
               <p className="text-sm font-medium">@DRT2026</p>
               <a 
-                href="https://wa.me/085156526862" 
+                href="https://wa.me/6285156526862" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm hover:text-primary-foreground/80 transition-colors"
               >
-                <MessageCircle className="w-4 h-4" />
+                <img src={whatsappIcon} alt="WhatsApp" className="w-5 h-5" />
                 <span>085156526862</span>
               </a>
             </div>

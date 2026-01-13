@@ -109,7 +109,7 @@ const Auth = () => {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="admin@pesantren.id" {...field} />
+                        <Input type="email" placeholder="admin@drt.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

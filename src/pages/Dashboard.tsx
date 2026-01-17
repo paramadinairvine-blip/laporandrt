@@ -109,7 +109,7 @@ const Dashboard = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/auth');
+    navigate('/');
   };
 
   const handleAddUser = async (data: SignupFormData) => {

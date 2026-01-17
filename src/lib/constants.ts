@@ -9,5 +9,14 @@ export const STATUS_OPTIONS = [
   { value: 'completed', label: 'Sudah Tertangani', color: 'bg-green-500' },
 ] as const;
 
+export const DAMAGE_TYPES = [
+  { value: 'rehab', label: 'Rehab' },
+  { value: 'listrik', label: 'Listrik' },
+  { value: 'air', label: 'Air' },
+  { value: 'taman', label: 'Taman' },
+  { value: 'lainnya', label: 'Lainnya' },
+] as const;
+
 export type LocationType = typeof LOCATIONS[number]['value'];
 export type StatusType = typeof STATUS_OPTIONS[number]['value'];
+export type DamageType = typeof DAMAGE_TYPES[number]['value'];

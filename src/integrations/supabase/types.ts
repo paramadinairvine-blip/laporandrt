@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           damage_description: string
+          damage_type: Database["public"]["Enums"]["damage_type"]
           id: string
           location: Database["public"]["Enums"]["location_type"]
           photo_url: string | null
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           created_at?: string
           damage_description: string
+          damage_type?: Database["public"]["Enums"]["damage_type"]
           id?: string
           location: Database["public"]["Enums"]["location_type"]
           photo_url?: string | null
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           created_at?: string
           damage_description?: string
+          damage_type?: Database["public"]["Enums"]["damage_type"]
           id?: string
           location?: Database["public"]["Enums"]["location_type"]
           photo_url?: string | null
@@ -101,6 +104,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      damage_type: "rehab" | "listrik" | "air" | "taman" | "lainnya"
       location_type: "asrama_kampus_1" | "asrama_kampus_2" | "asrama_kampus_3"
       report_status: "pending" | "in_progress" | "completed"
     }
@@ -231,6 +235,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      damage_type: ["rehab", "listrik", "air", "taman", "lainnya"],
       location_type: ["asrama_kampus_1", "asrama_kampus_2", "asrama_kampus_3"],
       report_status: ["pending", "in_progress", "completed"],
     },

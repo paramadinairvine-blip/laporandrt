@@ -9,12 +9,13 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LOCATIONS, STATUS_OPTIONS, DAMAGE_TYPES } from '@/lib/constants';
-import { ClipboardList, Search, Filter, RefreshCw, Loader2, Image, Home, ShieldCheck } from 'lucide-react';
+import { ClipboardList, Search, Filter, RefreshCw, Loader2, Image, Home, ShieldCheck, Bell } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import campusBackground from '@/assets/campus-background.jpg';
 import logoDrt from '@/assets/logo-drt.png';
 import Footer from '@/components/Footer';
+import { useToast } from '@/hooks/use-toast';
 
 // Public view interface - reporter_name excluded for privacy
 interface DamageReportPublic {
@@ -29,6 +30,7 @@ interface DamageReportPublic {
 }
 
 const Reports = () => {
+  const { toast } = useToast();
   const [reports, setReports] = useState<DamageReportPublic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,8 +38,63 @@ const Reports = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [damageTypeFilter, setDamageTypeFilter] = useState<string>('all');
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending': return 'Belum Tertangani';
+      case 'in_progress': return 'Sedang Diproses';
+      case 'completed': return 'Sudah Tertangani';
+      default: return status;
+    }
+  };
+
   useEffect(() => {
     fetchReports();
+
+    // Subscribe to realtime changes on damage_reports
+    const channel = supabase
+      .channel('damage_reports_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'damage_reports'
+        },
+        (payload) => {
+          const oldStatus = payload.old.status;
+          const newStatus = payload.new.status;
+          
+          if (oldStatus !== newStatus) {
+            toast({
+              title: '🔔 Status Laporan Diperbarui',
+              description: `Status laporan berubah menjadi "${getStatusLabel(newStatus)}"`,
+            });
+            
+            // Refresh data
+            fetchReports();
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'damage_reports'
+        },
+        () => {
+          toast({
+            title: '📋 Laporan Baru',
+            description: 'Ada laporan kerusakan baru yang masuk',
+          });
+          fetchReports();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchReports = async () => {

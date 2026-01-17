@@ -263,7 +263,7 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
         />
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Foto Kerusakan (Opsional)</label>
+          <label className="text-sm font-medium text-foreground">Foto Kerusakan <span className="text-destructive">*</span></label>
           
           {!selectedFile ? (
             <div 
@@ -307,7 +307,7 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
         <Button 
           type="submit" 
           className="w-full h-12 text-base font-medium"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !selectedFile}
         >
           {isSubmitting ? (
             <>

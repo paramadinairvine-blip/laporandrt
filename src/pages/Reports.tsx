@@ -16,7 +16,7 @@ import campusBackground from '@/assets/campus-background.jpg';
 import logoDrt from '@/assets/logo-drt.png';
 import Footer from '@/components/Footer';
 
-// Public view interface
+// Public view interface - reporter_name excluded for privacy
 interface DamageReportPublic {
   id: string;
   damage_description: string;
@@ -26,7 +26,6 @@ interface DamageReportPublic {
   status: 'pending' | 'in_progress' | 'completed';
   created_at: string;
   updated_at: string;
-  reporter_name: string;
 }
 
 const Reports = () => {
@@ -258,7 +257,6 @@ const Reports = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Tanggal</TableHead>
-                        <TableHead>Pelapor</TableHead>
                         <TableHead>Jenis Kerusakan</TableHead>
                         <TableHead>Deskripsi Kerusakan</TableHead>
                         <TableHead>Lokasi</TableHead>
@@ -271,9 +269,6 @@ const Reports = () => {
                         <TableRow key={report.id}>
                           <TableCell className="whitespace-nowrap">
                             {format(new Date(report.created_at), 'dd MMM yyyy', { locale: idLocale })}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap font-medium">
-                            {report.reporter_name}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">{getDamageTypeLabel(report.damage_type)}</Badge>

@@ -49,9 +49,6 @@ const Auth = () => {
           message = 'Email belum dikonfirmasi';
         }
         toast({ title: 'Login Gagal', description: message, variant: 'destructive' });
-      } else {
-        // Mark session as verified for this browser session
-        sessionStorage.setItem('admin_session_verified', 'true');
       }
     } finally {
       setIsSubmitting(false);

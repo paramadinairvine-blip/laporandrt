@@ -74,26 +74,11 @@ const Dashboard = () => {
     defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' }
   });
 
-  // Security: Force re-login on every page refresh/new session
   useEffect(() => {
-    const checkSessionSecurity = async () => {
-      const sessionVerified = sessionStorage.getItem('admin_session_verified');
-      
-      if (!authLoading) {
-        if (!user) {
-          navigate('/auth');
-        } else if (!sessionVerified) {
-          // User has stored session but hasn't logged in this browser session
-          // Force re-authentication for maximum security
-          await signOut();
-          sessionStorage.removeItem('admin_session_verified');
-          navigate('/auth');
-        }
-      }
-    };
-    
-    checkSessionSecurity();
-  }, [user, authLoading, navigate, signOut]);
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -123,7 +108,6 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
-    sessionStorage.removeItem('admin_session_verified');
     await signOut();
     navigate('/');
   };

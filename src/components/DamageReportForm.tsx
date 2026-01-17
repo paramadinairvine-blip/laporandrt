@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { LOCATIONS } from '@/lib/constants';
+import { LOCATIONS, DAMAGE_TYPES } from '@/lib/constants';
 import { Upload, X, CheckCircle, Loader2 } from 'lucide-react';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -20,6 +20,9 @@ const formSchema = z.object({
   damage_description: z.string().trim().min(10, 'Deskripsi minimal 10 karakter').max(1000, 'Deskripsi maksimal 1000 karakter'),
   location: z.enum(['asrama_kampus_1', 'asrama_kampus_2', 'asrama_kampus_3'], {
     required_error: 'Pilih lokasi kerusakan'
+  }),
+  damage_type: z.enum(['rehab', 'listrik', 'air', 'taman', 'lainnya'], {
+    required_error: 'Pilih jenis kerusakan'
   }),
 });
 
@@ -141,6 +144,7 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
           reporter_name: data.reporter_name,
           damage_description: data.damage_description,
           location: data.location,
+          damage_type: data.damage_type,
           photo_url: photoUrl
         });
 
@@ -224,6 +228,31 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
                   {LOCATIONS.map((loc) => (
                     <SelectItem key={loc.value} value={loc.value}>
                       {loc.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="damage_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-foreground font-medium">Jenis Kerusakan</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Pilih jenis kerusakan" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {DAMAGE_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { LOCATIONS, STATUS_OPTIONS } from '@/lib/constants';
+import { LOCATIONS, STATUS_OPTIONS, DAMAGE_TYPES } from '@/lib/constants';
 import { ClipboardList, Search, Filter, RefreshCw, Loader2, Image, Home, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -21,6 +21,7 @@ interface DamageReport {
   reporter_name: string;
   damage_description: string;
   location: 'asrama_kampus_1' | 'asrama_kampus_2' | 'asrama_kampus_3';
+  damage_type: 'rehab' | 'listrik' | 'air' | 'taman' | 'lainnya';
   photo_url: string | null;
   status: 'pending' | 'in_progress' | 'completed';
   created_at: string;
@@ -58,6 +59,11 @@ const Reports = () => {
   const getLocationLabel = (value: string) => {
     const location = LOCATIONS.find(loc => loc.value === value);
     return location?.label || value;
+  };
+
+  const getDamageTypeLabel = (value: string) => {
+    const type = DAMAGE_TYPES.find(t => t.value === value);
+    return type?.label || value;
   };
 
   const getStatusBadge = (status: string) => {
@@ -237,6 +243,7 @@ const Reports = () => {
                       <TableRow>
                         <TableHead>Tanggal</TableHead>
                         <TableHead>Pelapor</TableHead>
+                        <TableHead>Jenis Kerusakan</TableHead>
                         <TableHead>Deskripsi Kerusakan</TableHead>
                         <TableHead>Lokasi</TableHead>
                         <TableHead>Status</TableHead>
@@ -250,6 +257,9 @@ const Reports = () => {
                             {format(new Date(report.created_at), 'dd MMM yyyy', { locale: idLocale })}
                           </TableCell>
                           <TableCell className="font-medium">{report.reporter_name}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{getDamageTypeLabel(report.damage_type)}</Badge>
+                          </TableCell>
                           <TableCell className="max-w-xs truncate">{report.damage_description}</TableCell>
                           <TableCell>{getLocationLabel(report.location)}</TableCell>
                           <TableCell>{getStatusBadge(report.status)}</TableCell>

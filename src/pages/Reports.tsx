@@ -16,9 +16,9 @@ import campusBackground from '@/assets/campus-background.jpg';
 import logoDrt from '@/assets/logo-drt.png';
 import whatsappIcon from '@/assets/whatsapp-icon.png';
 
-interface DamageReport {
+// Public view interface - no reporter_name for privacy
+interface DamageReportPublic {
   id: string;
-  reporter_name: string;
   damage_description: string;
   location: 'asrama_kampus_1' | 'asrama_kampus_2' | 'asrama_kampus_3';
   damage_type: 'rehab' | 'listrik' | 'air' | 'taman' | 'lainnya';
@@ -29,7 +29,7 @@ interface DamageReport {
 }
 
 const Reports = () => {
-  const [reports, setReports] = useState<DamageReport[]>([]);
+  const [reports, setReports] = useState<DamageReportPublic[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState<string>('all');
@@ -42,8 +42,9 @@ const Reports = () => {
   const fetchReports = async () => {
     setIsLoading(true);
     try {
+      // Use public view to protect reporter privacy
       const { data, error } = await supabase
-        .from('damage_reports')
+        .from('damage_reports_public')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -80,9 +81,7 @@ const Reports = () => {
   };
 
   const filteredReports = reports.filter(report => {
-    const matchesSearch = 
-      report.reporter_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      report.damage_description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = report.damage_description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = locationFilter === 'all' || report.location === locationFilter;
     const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
     return matchesSearch && matchesLocation && matchesStatus;
@@ -181,7 +180,7 @@ const Reports = () => {
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Cari berdasarkan nama atau deskripsi..."
+                    placeholder="Cari berdasarkan deskripsi kerusakan..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -242,7 +241,6 @@ const Reports = () => {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Tanggal</TableHead>
-                        <TableHead>Pelapor</TableHead>
                         <TableHead>Jenis Kerusakan</TableHead>
                         <TableHead>Deskripsi Kerusakan</TableHead>
                         <TableHead>Lokasi</TableHead>
@@ -256,7 +254,6 @@ const Reports = () => {
                           <TableCell className="whitespace-nowrap">
                             {format(new Date(report.created_at), 'dd MMM yyyy', { locale: idLocale })}
                           </TableCell>
-                          <TableCell className="font-medium">{report.reporter_name}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{getDamageTypeLabel(report.damage_type)}</Badge>
                           </TableCell>

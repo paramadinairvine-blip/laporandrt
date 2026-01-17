@@ -105,7 +105,7 @@ const Index = () => {
                 className="flex items-center gap-2 text-sm hover:text-primary-foreground/80 transition-colors"
               >
                 <img src={whatsappIcon} alt="WhatsApp" className="w-5 h-5" />
-                <span>085156526862</span>
+                <span>CS DRT</span>
               </a>
             </div>
           </div>

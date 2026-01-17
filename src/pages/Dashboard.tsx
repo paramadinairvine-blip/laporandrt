@@ -14,11 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { LOCATIONS, STATUS_OPTIONS } from '@/lib/constants';
+import { LOCATIONS, STATUS_OPTIONS, DAMAGE_TYPES } from '@/lib/constants';
 import { 
   LogOut, Search, Filter, RefreshCw, Loader2, 
-  ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus, CheckCircle, Trash2
+  ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus, CheckCircle, Trash2,
+  Download, FileSpreadsheet
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import logoDrt from '@/assets/logo-drt.png';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -28,6 +30,7 @@ interface DamageReport {
   id: string;
   reporter_name: string;
   damage_description: string;
+  damage_type: 'rehab' | 'listrik' | 'air' | 'taman' | 'lainnya';
   location: 'asrama_kampus_1' | 'asrama_kampus_2' | 'asrama_kampus_3';
   photo_url: string | null;
   status: 'pending' | 'in_progress' | 'completed';
@@ -232,6 +235,61 @@ const Dashboard = () => {
 
   const COLORS = ['#1e40af', '#3b82f6', '#60a5fa'];
   const STATUS_COLORS = ['#eab308', '#22c55e'];
+
+  const getDamageTypeLabel = (value: string) => {
+    return DAMAGE_TYPES.find(d => d.value === value)?.label || value;
+  };
+
+  const exportToExcel = (exportFiltered: boolean) => {
+    const dataToExport = exportFiltered ? filteredReports : reports;
+    
+    if (dataToExport.length === 0) {
+      toast({
+        title: 'Tidak Ada Data',
+        description: 'Tidak ada data untuk diekspor',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const excelData = dataToExport.map((report, index) => ({
+      'No': index + 1,
+      'Tanggal': format(new Date(report.created_at), 'dd/MM/yyyy HH:mm', { locale: idLocale }),
+      'Nama Pelapor': report.reporter_name,
+      'Jenis Kerusakan': getDamageTypeLabel(report.damage_type),
+      'Deskripsi': report.damage_description,
+      'Lokasi': getLocationLabel(report.location),
+      'Status': report.status === 'completed' ? 'Sudah Tertangani' : 'Belum Tertangani',
+      'URL Foto': report.photo_url || '-'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan Kerusakan');
+
+    // Auto-size columns
+    const colWidths = [
+      { wch: 5 },   // No
+      { wch: 18 },  // Tanggal
+      { wch: 20 },  // Nama Pelapor
+      { wch: 15 },  // Jenis Kerusakan
+      { wch: 40 },  // Deskripsi
+      { wch: 20 },  // Lokasi
+      { wch: 18 },  // Status
+      { wch: 50 },  // URL Foto
+    ];
+    worksheet['!cols'] = colWidths;
+
+    const filterInfo = exportFiltered ? '_filtered' : '_all';
+    const fileName = `Laporan_Kerusakan${filterInfo}_${format(new Date(), 'dd-MM-yyyy')}.xlsx`;
+    
+    XLSX.writeFile(workbook, fileName);
+    
+    toast({
+      title: 'Ekspor Berhasil',
+      description: `${dataToExport.length} laporan berhasil diekspor ke Excel`
+    });
+  };
 
   if (authLoading) {
     return (
@@ -469,44 +527,74 @@ const Dashboard = () => {
         {/* Filters */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari nama pelapor atau deskripsi..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari nama pelapor atau deskripsi..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter Lokasi" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Lokasi</SelectItem>
+                    {LOCATIONS.map((loc) => (
+                      <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    {STATUS_OPTIONS.map((status) => (
+                      <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" onClick={fetchReports} disabled={isLoading}>
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
               </div>
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter Lokasi" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Lokasi</SelectItem>
-                  {LOCATIONS.map((loc) => (
-                    <SelectItem key={loc.value} value={loc.value}>{loc.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Status</SelectItem>
-                  {STATUS_OPTIONS.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" onClick={fetchReports} disabled={isLoading}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
+              
+              {/* Export Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Ekspor ke Excel:</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => exportToExcel(true)}
+                    disabled={filteredReports.length === 0}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Ekspor Hasil Filter ({filteredReports.length})
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => exportToExcel(false)}
+                    disabled={reports.length === 0}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Ekspor Semua ({reports.length})
+                  </Button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

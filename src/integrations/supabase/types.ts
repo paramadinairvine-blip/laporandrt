@@ -91,7 +91,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      damage_reports_public: {
+        Row: {
+          created_at: string | null
+          damage_description: string | null
+          damage_type: Database["public"]["Enums"]["damage_type"] | null
+          id: string | null
+          location: Database["public"]["Enums"]["location_type"] | null
+          photo_url: string | null
+          status: Database["public"]["Enums"]["report_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          damage_description?: string | null
+          damage_type?: Database["public"]["Enums"]["damage_type"] | null
+          id?: string | null
+          location?: Database["public"]["Enums"]["location_type"] | null
+          photo_url?: string | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          damage_description?: string | null
+          damage_type?: Database["public"]["Enums"]["damage_type"] | null
+          id?: string | null
+          location?: Database["public"]["Enums"]["location_type"] | null
+          photo_url?: string | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

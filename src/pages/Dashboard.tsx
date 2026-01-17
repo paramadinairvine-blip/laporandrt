@@ -18,13 +18,16 @@ import { LOCATIONS, STATUS_OPTIONS, DAMAGE_TYPES } from '@/lib/constants';
 import { 
   LogOut, Search, Filter, RefreshCw, Loader2, 
   ClipboardList, Calendar, MapPin, TrendingUp, Image, UserPlus, CheckCircle, Trash2,
-  Download, FileSpreadsheet
+  Download, FileSpreadsheet, CalendarIcon, X
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import logoDrt from '@/assets/logo-drt.png';
-import { format } from 'date-fns';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
 
 interface DamageReport {
   id: string;
@@ -61,6 +64,8 @@ const Dashboard = () => {
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [damageTypeFilter, setDamageTypeFilter] = useState<string>('all');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -216,7 +221,13 @@ const Dashboard = () => {
     const matchesLocation = locationFilter === 'all' || report.location === locationFilter;
     const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
     const matchesDamageType = damageTypeFilter === 'all' || report.damage_type === damageTypeFilter;
-    return matchesSearch && matchesLocation && matchesStatus && matchesDamageType;
+    
+    // Date range filter
+    const reportDate = new Date(report.created_at);
+    const matchesDateFrom = !dateFrom || !isBefore(reportDate, startOfDay(dateFrom));
+    const matchesDateTo = !dateTo || !isAfter(reportDate, endOfDay(dateTo));
+    
+    return matchesSearch && matchesLocation && matchesStatus && matchesDamageType && matchesDateFrom && matchesDateTo;
   });
 
   // Statistics
@@ -580,6 +591,79 @@ const Dashboard = () => {
                   <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                   Refresh
                 </Button>
+              </div>
+              
+              {/* Date Range Filter */}
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CalendarIcon className="w-4 h-4" />
+                  <span>Rentang Tanggal:</span>
+                </div>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[160px] justify-start text-left font-normal",
+                          !dateFrom && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateFrom ? format(dateFrom, "dd/MM/yyyy") : "Dari Tanggal"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={dateFrom}
+                        onSelect={setDateFrom}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                        disabled={(date) => dateTo ? isAfter(date, dateTo) : false}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-muted-foreground">-</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[160px] justify-start text-left font-normal",
+                          !dateTo && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateTo ? format(dateTo, "dd/MM/yyyy") : "Sampai Tanggal"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={dateTo}
+                        onSelect={setDateTo}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                        disabled={(date) => dateFrom ? isBefore(date, dateFrom) : false}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {(dateFrom || dateTo) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDateFrom(undefined);
+                        setDateTo(undefined);
+                      }}
+                      className="h-8 px-2"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Reset
+                    </Button>
+                  )}
+                </div>
               </div>
               
               {/* Export Buttons */}

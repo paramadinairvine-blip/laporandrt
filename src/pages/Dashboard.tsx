@@ -656,7 +656,7 @@ const Dashboard = () => {
                         </TableCell>
                         <TableCell>{getStatusBadge(report.status)}</TableCell>
                         <TableCell>
-                          {report.photo_url ? (
+                        {report.photo_url ? (
                             <Dialog>
                               <DialogTrigger asChild>
                                 <Button variant="ghost" size="sm" className="p-0">
@@ -668,11 +668,34 @@ const Dashboard = () => {
                                 </Button>
                               </DialogTrigger>
                               <DialogContent className="max-w-3xl">
-                                <img 
-                                  src={report.photo_url} 
-                                  alt="Foto kerusakan"
-                                  className="w-full h-auto rounded"
-                                />
+                                <DialogHeader>
+                                  <DialogTitle>Foto Kerusakan</DialogTitle>
+                                </DialogHeader>
+                                <div className="relative">
+                                  <img 
+                                    src={report.photo_url} 
+                                    alt="Foto kerusakan"
+                                    className="w-full h-auto rounded"
+                                  />
+                                  <div className="mt-4 flex justify-end">
+                                    <Button 
+                                      onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = report.photo_url!;
+                                        link.download = `foto-kerusakan-${report.id}.jpg`;
+                                        link.target = '_blank';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        toast({ title: 'Mengunduh foto...' });
+                                      }}
+                                      className="gap-2"
+                                    >
+                                      <Download className="w-4 h-4" />
+                                      Download Foto
+                                    </Button>
+                                  </div>
+                                </div>
                               </DialogContent>
                             </Dialog>
                           ) : (

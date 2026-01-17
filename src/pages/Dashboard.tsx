@@ -60,6 +60,7 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [damageTypeFilter, setDamageTypeFilter] = useState<string>('all');
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -214,7 +215,8 @@ const Dashboard = () => {
       report.damage_description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = locationFilter === 'all' || report.location === locationFilter;
     const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
-    return matchesSearch && matchesLocation && matchesStatus;
+    const matchesDamageType = damageTypeFilter === 'all' || report.damage_type === damageTypeFilter;
+    return matchesSearch && matchesLocation && matchesStatus && matchesDamageType;
   });
 
   // Statistics
@@ -559,6 +561,18 @@ const Dashboard = () => {
                     <SelectItem value="all">Semua Status</SelectItem>
                     {STATUS_OPTIONS.map((status) => (
                       <SelectItem key={status.value} value={status.value}>{status.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={damageTypeFilter} onValueChange={setDamageTypeFilter}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue placeholder="Filter Jenis" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Jenis</SelectItem>
+                    {DAMAGE_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

@@ -819,15 +819,23 @@ const Dashboard = () => {
                                   variant="ghost" 
                                   size="icon"
                                   className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
-                                  onClick={() => {
-                                    const link = document.createElement('a');
-                                    link.href = report.photo_url!;
-                                    link.download = `foto-kerusakan-${report.id}.jpg`;
-                                    link.target = '_blank';
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    toast({ title: 'Mengunduh foto...' });
+                                  onClick={async () => {
+                                    try {
+                                      toast({ title: 'Mengunduh foto...' });
+                                      const response = await fetch(report.photo_url!);
+                                      const blob = await response.blob();
+                                      const url = window.URL.createObjectURL(blob);
+                                      const link = document.createElement('a');
+                                      link.href = url;
+                                      link.download = `foto-kerusakan-${report.id}.jpg`;
+                                      document.body.appendChild(link);
+                                      link.click();
+                                      document.body.removeChild(link);
+                                      window.URL.revokeObjectURL(url);
+                                      toast({ title: 'Foto berhasil diunduh!' });
+                                    } catch (error) {
+                                      toast({ title: 'Gagal mengunduh foto', variant: 'destructive' });
+                                    }
                                   }}
                                 >
                                   <Download className="w-4 h-4" />

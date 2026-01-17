@@ -68,6 +68,7 @@ const Dashboard = () => {
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
 
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -83,8 +84,26 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchReports();
+      fetchUserName();
     }
   }, [user]);
+
+  const fetchUserName = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    
+    if (!error && data?.full_name) {
+      setUserName(data.full_name);
+    } else {
+      // Fallback to email if no profile name
+      setUserName(user.email?.split('@')[0] || null);
+    }
+  };
 
   const fetchReports = async () => {
     setIsLoading(true);
@@ -332,6 +351,11 @@ const Dashboard = () => {
               </div>
             </Link>
             <div className="flex items-center gap-2">
+              {userName && (
+                <span className="text-sm text-primary-foreground/80 hidden md:inline">
+                  Halo, <span className="font-semibold text-primary-foreground">{userName}</span>
+                </span>
+              )}
               <Button 
                 variant="ghost" 
                 onClick={() => navigate('/completed')}

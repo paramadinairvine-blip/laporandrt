@@ -99,6 +99,7 @@ export type Database = {
           id: string | null
           location: Database["public"]["Enums"]["location_type"] | null
           photo_url: string | null
+          reporter_name: string | null
           status: Database["public"]["Enums"]["report_status"] | null
           updated_at: string | null
         }
@@ -109,6 +110,7 @@ export type Database = {
           id?: string | null
           location?: Database["public"]["Enums"]["location_type"] | null
           photo_url?: string | null
+          reporter_name?: string | null
           status?: Database["public"]["Enums"]["report_status"] | null
           updated_at?: string | null
         }
@@ -119,6 +121,7 @@ export type Database = {
           id?: string | null
           location?: Database["public"]["Enums"]["location_type"] | null
           photo_url?: string | null
+          reporter_name?: string | null
           status?: Database["public"]["Enums"]["report_status"] | null
           updated_at?: string | null
         }

@@ -41,6 +41,7 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    mode: 'onChange',
     defaultValues: {
       reporter_name: '',
       damage_description: '',
@@ -307,7 +308,7 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
         <Button 
           type="submit" 
           className="w-full h-12 text-base font-medium"
-          disabled={isSubmitting || !selectedFile}
+          disabled={isSubmitting || !selectedFile || !form.formState.isValid}
         >
           {isSubmitting ? (
             <>

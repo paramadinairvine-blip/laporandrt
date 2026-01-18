@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +25,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
+import { logAdminAction } from '@/lib/adminLogger';
 
 interface DamageReport {
   id: string;
@@ -63,8 +64,41 @@ const Dashboard = () => {
     if (user) {
       fetchReports();
       fetchUserName();
+
+      // Subscribe to realtime updates for damage_reports
+      const channel = supabase
+        .channel('dashboard-reports-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'damage_reports'
+          },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              const newReport = payload.new as DamageReport;
+              setReports(prev => [newReport, ...prev]);
+              toast({
+                title: 'Laporan Baru',
+                description: `Laporan dari ${newReport.reporter_name} telah masuk`
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              const updatedReport = payload.new as DamageReport;
+              setReports(prev => prev.map(r => r.id === updatedReport.id ? updatedReport : r));
+            } else if (payload.eventType === 'DELETE') {
+              const deletedId = payload.old.id;
+              setReports(prev => prev.filter(r => r.id !== deletedId));
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-  }, [user]);
+  }, [user, toast]);
 
   const fetchUserName = async () => {
     if (!user) return;
@@ -138,12 +172,18 @@ const Dashboard = () => {
 
       if (error) throw error;
 
+      // Log admin action
+      await logAdminAction({
+        action: 'update_status',
+        target_type: 'report',
+        target_id: reportId,
+        details: { status: newStatus === 'completed' ? 'Sudah Tertangani' : 'Belum Tertangani' }
+      });
+
       toast({
         title: 'Status Diperbarui',
         description: `Laporan berhasil diubah ke ${newStatus === 'completed' ? 'Sudah Tertangani' : 'Belum Tertangani'}`
       });
-      
-      fetchReports();
     } catch (error: any) {
       toast({
         title: 'Gagal Mengubah Status',
@@ -153,7 +193,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleDeleteReport = async (reportId: string, photoUrl: string | null) => {
+  const handleDeleteReport = async (reportId: string, photoUrl: string | null, reporterName: string) => {
     try {
       // Delete photo from storage if exists
       if (photoUrl) {
@@ -172,12 +212,18 @@ const Dashboard = () => {
 
       if (error) throw error;
 
+      // Log admin action
+      await logAdminAction({
+        action: 'delete_report',
+        target_type: 'report',
+        target_id: reportId,
+        details: { reporter_name: reporterName }
+      });
+
       toast({
         title: 'Laporan Dihapus',
         description: 'Laporan berhasil dihapus dari sistem'
       });
-      
-      fetchReports();
     } catch (error: any) {
       toast({
         title: 'Gagal Menghapus Laporan',
@@ -743,7 +789,7 @@ const Dashboard = () => {
                                 variant="ghost" 
                                 size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => handleDeleteReport(report.id, report.photo_url)}
+                                onClick={() => handleDeleteReport(report.id, report.photo_url, report.reporter_name)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>

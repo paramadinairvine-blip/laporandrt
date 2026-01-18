@@ -13,8 +13,11 @@ import {
   Loader2,
   Shield,
   ChevronDown,
-  Key
+  Key,
+  History
 } from 'lucide-react';
+import { logAdminAction } from '@/lib/adminLogger';
+import { AdminLogs } from '@/components/AdminLogs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -90,6 +93,7 @@ export const AdminMenu = () => {
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
 
   const addAdminForm = useForm<AddAdminFormData>({
@@ -168,6 +172,14 @@ export const AdminMenu = () => {
 
       // Note: The new user will need to be manually assigned admin role
       // This is because we can't get the new user's ID immediately after signup
+      
+      // Log admin action
+      await logAdminAction({
+        action: 'add_admin',
+        target_type: 'admin',
+        details: { email: data.email, name: data.fullName }
+      });
+
       toast({ 
         title: 'Akun Admin Berhasil Dibuat', 
         description: `Akun untuk ${data.email} telah dibuat. Admin perlu menambahkan role admin secara manual di database.` 
@@ -206,6 +218,14 @@ export const AdminMenu = () => {
 
       if (error) throw error;
 
+      // Log admin action
+      await logAdminAction({
+        action: 'delete_admin',
+        target_type: 'admin',
+        target_id: selectedAdmin.user_id,
+        details: { email: selectedAdmin.email, name: selectedAdmin.full_name }
+      });
+
       toast({
         title: 'Admin Berhasil Dihapus',
         description: `Role admin untuk ${selectedAdmin.email || selectedAdmin.full_name} telah dihapus`
@@ -243,6 +263,14 @@ export const AdminMenu = () => {
       if (result?.error) {
         throw new Error(result.error);
       }
+
+      // Log admin action
+      await logAdminAction({
+        action: 'reset_password',
+        target_type: 'admin',
+        target_id: selectedAdmin.user_id,
+        details: { email: selectedAdmin.email, name: selectedAdmin.full_name }
+      });
 
       toast({
         title: 'Password Berhasil Diubah',
@@ -295,6 +323,10 @@ export const AdminMenu = () => {
           <DropdownMenuItem onClick={() => setIsAddAdminOpen(true)}>
             <UserPlus className="w-4 h-4 mr-2" />
             Tambah Admin
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setIsLogsOpen(true)}>
+            <History className="w-4 h-4 mr-2" />
+            Log Aktivitas
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -534,6 +566,9 @@ export const AdminMenu = () => {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Admin Logs Dialog */}
+      <AdminLogs isOpen={isLogsOpen} onOpenChange={setIsLogsOpen} />
     </>
   );
 };

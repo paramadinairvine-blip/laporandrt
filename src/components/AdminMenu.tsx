@@ -149,10 +149,33 @@ export const AdminMenu = () => {
     }
   };
 
+  // Fetch admins when dialog opens and set up realtime subscription
   useEffect(() => {
     if (isDataAdminOpen) {
       fetchAdmins();
     }
+
+    // Subscribe to user_roles changes for realtime updates
+    const channel = supabase
+      .channel('admin-roles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_roles',
+          filter: 'role=eq.admin'
+        },
+        () => {
+          // Refetch admins when any admin role changes
+          fetchAdmins();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isDataAdminOpen]);
 
   const handleAddAdmin = async (data: AddAdminFormData) => {

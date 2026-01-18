@@ -11,8 +11,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { LOCATIONS, DAMAGE_TYPES } from '@/lib/constants';
 import { Upload, X, CheckCircle, Loader2 } from 'lucide-react';
+import { compressImage, blobToFile, formatFileSize } from '@/lib/imageCompression';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB (before compression)
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
 const formSchema = z.object({
@@ -35,7 +36,10 @@ interface DamageReportFormProps {
 export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [originalSize, setOriginalSize] = useState<number>(0);
+  const [compressedSize, setCompressedSize] = useState<number>(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -48,7 +52,7 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
     }
   });
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -64,18 +68,46 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
     if (file.size > MAX_FILE_SIZE) {
       toast({
         title: 'Ukuran file terlalu besar',
-        description: 'Maksimal ukuran file adalah 5MB',
+        description: 'Maksimal ukuran file adalah 10MB',
         variant: 'destructive'
       });
       return;
     }
 
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    setIsCompressing(true);
+    setOriginalSize(file.size);
+
+    try {
+      // Compress the image
+      const compressedBlob = await compressImage(file, 1200, 1200, 0.7);
+      const compressedFile = blobToFile(compressedBlob, file.name.replace(/\.[^/.]+$/, '.jpg'));
+      
+      setCompressedSize(compressedFile.size);
+      setSelectedFile(compressedFile);
+      setPreviewUrl(URL.createObjectURL(compressedFile));
+
+      const savedPercent = Math.round((1 - compressedFile.size / file.size) * 100);
+      if (savedPercent > 0) {
+        toast({
+          title: 'Foto dikompresi',
+          description: `Ukuran berkurang ${savedPercent}% (${formatFileSize(file.size)} → ${formatFileSize(compressedFile.size)})`,
+        });
+      }
+    } catch (error) {
+      console.error('Compression error:', error);
+      // Fallback to original file if compression fails
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setCompressedSize(file.size);
+    } finally {
+      setIsCompressing(false);
+    }
   };
 
   const removeFile = () => {
     setSelectedFile(null);
+    setOriginalSize(0);
+    setCompressedSize(0);
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
@@ -266,7 +298,14 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground">Foto Kerusakan <span className="text-destructive">*</span></label>
           
-          {!selectedFile ? (
+          {isCompressing ? (
+            <div className="border-2 border-dashed border-primary rounded-lg p-8 text-center bg-muted/30">
+              <Loader2 className="w-10 h-10 mx-auto mb-3 text-primary animate-spin" />
+              <p className="text-sm text-muted-foreground">
+                Mengompresi foto...
+              </p>
+            </div>
+          ) : !selectedFile ? (
             <div 
               className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors bg-muted/30"
               onClick={() => fileInputRef.current?.click()}
@@ -276,7 +315,7 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
                 Klik untuk mengunggah foto
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                JPG, PNG, WebP (Maks. 5MB)
+                JPG, PNG, WebP (Maks. 10MB, otomatis dikompresi)
               </p>
             </div>
           ) : (
@@ -293,6 +332,16 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
               >
                 <X className="w-4 h-4" />
               </button>
+              {compressedSize > 0 && (
+                <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 text-white text-xs rounded">
+                  {formatFileSize(compressedSize)}
+                  {originalSize > compressedSize && (
+                    <span className="text-green-400 ml-1">
+                      (-{Math.round((1 - compressedSize / originalSize) * 100)}%)
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
           
@@ -308,7 +357,7 @@ export const DamageReportForm = ({ onSuccess }: DamageReportFormProps) => {
         <Button 
           type="submit" 
           className="w-full h-12 text-base font-medium"
-          disabled={isSubmitting || !selectedFile || !form.formState.isValid}
+          disabled={isSubmitting || isCompressing || !selectedFile || !form.formState.isValid}
         >
           {isSubmitting ? (
             <>

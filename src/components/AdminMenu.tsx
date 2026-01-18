@@ -253,14 +253,17 @@ export const AdminMenu = () => {
 
     setIsSubmitting(true);
     try {
-      // Remove admin role from user_roles table
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', selectedAdmin.user_id)
-        .eq('role', 'admin');
+      // Call edge function to completely delete admin user
+      const { data: result, error } = await supabase.functions.invoke('delete-admin-user', {
+        body: {
+          targetUserId: selectedAdmin.user_id
+        }
+      });
 
-      if (error) throw error;
+      const errorMessage = error?.message || result?.error;
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
 
       // Log admin action
       await logAdminAction({
@@ -272,7 +275,7 @@ export const AdminMenu = () => {
 
       toast({
         title: 'Admin Berhasil Dihapus',
-        description: `Role admin untuk ${selectedAdmin.email || selectedAdmin.full_name} telah dihapus`
+        description: `Akun ${selectedAdmin.email || selectedAdmin.full_name} telah dihapus sepenuhnya`
       });
       
       setIsDeleteDialogOpen(false);
@@ -281,7 +284,7 @@ export const AdminMenu = () => {
     } catch (error: any) {
       toast({
         title: 'Gagal Menghapus Admin',
-        description: error.message,
+        description: error.message || 'Terjadi kesalahan saat menghapus admin',
         variant: 'destructive'
       });
     } finally {
@@ -527,11 +530,11 @@ export const AdminMenu = () => {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Admin?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus Admin Permanen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus role admin untuk{' '}
+              Apakah Anda yakin ingin menghapus akun{' '}
               <strong>{selectedAdmin?.full_name || selectedAdmin?.email}</strong>? 
-              Akun tetap ada, tetapi tidak akan memiliki akses admin.
+              Akun akan dihapus sepenuhnya dan tidak dapat login lagi. Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

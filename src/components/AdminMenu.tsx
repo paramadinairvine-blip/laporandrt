@@ -12,7 +12,8 @@ import {
   KeyRound, 
   Loader2,
   Shield,
-  ChevronDown
+  ChevronDown,
+  Key
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,7 +67,7 @@ const addAdminSchema = z.object({
   path: ['confirmPassword'],
 });
 
-const resetPasswordSchema = z.object({
+const directResetPasswordSchema = z.object({
   newPassword: z.string().min(6, 'Password minimal 6 karakter').max(100, 'Password terlalu panjang'),
   confirmPassword: z.string(),
 }).refine((data) => data.newPassword === data.confirmPassword, {
@@ -75,7 +76,7 @@ const resetPasswordSchema = z.object({
 });
 
 type AddAdminFormData = z.infer<typeof addAdminSchema>;
-type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+type DirectResetPasswordFormData = z.infer<typeof directResetPasswordSchema>;
 
 export const AdminMenu = () => {
   const { user, signUp } = useAuth();
@@ -96,8 +97,8 @@ export const AdminMenu = () => {
     defaultValues: { fullName: '', email: '', password: '', confirmPassword: '' }
   });
 
-  const resetPasswordForm = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
+  const directResetPasswordForm = useForm<DirectResetPasswordFormData>({
+    resolver: zodResolver(directResetPasswordSchema),
     defaultValues: { newPassword: '', confirmPassword: '' }
   });
 
@@ -224,27 +225,31 @@ export const AdminMenu = () => {
     }
   };
 
-  const handleResetPassword = async (data: ResetPasswordFormData) => {
+  const handleDirectResetPassword = async (data: DirectResetPasswordFormData) => {
     if (!selectedAdmin) return;
 
     setIsSubmitting(true);
     try {
-      // Use Supabase admin API to reset password
-      // Note: This requires the user to be logged in as admin
-      // For security, we send a password reset email instead
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        selectedAdmin.email || '',
-        { redirectTo: `${window.location.origin}/auth` }
-      );
+      // Call edge function to reset password directly
+      const { data: result, error } = await supabase.functions.invoke('reset-admin-password', {
+        body: {
+          targetUserId: selectedAdmin.user_id,
+          newPassword: data.newPassword
+        }
+      });
 
       if (error) throw error;
 
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+
       toast({
-        title: 'Email Reset Password Terkirim',
-        description: `Link reset password telah dikirim ke ${selectedAdmin.email}`
+        title: 'Password Berhasil Diubah',
+        description: `Password untuk ${selectedAdmin.email || selectedAdmin.full_name} telah diperbarui`
       });
       
-      resetPasswordForm.reset();
+      directResetPasswordForm.reset();
       setIsResetPasswordOpen(false);
       setSelectedAdmin(null);
     } catch (error: any) {
@@ -265,7 +270,7 @@ export const AdminMenu = () => {
 
   const openResetPasswordDialog = (admin: AdminUser) => {
     setSelectedAdmin(admin);
-    resetPasswordForm.reset();
+    directResetPasswordForm.reset();
     setIsResetPasswordOpen(true);
   };
 
@@ -472,35 +477,61 @@ export const AdminMenu = () => {
       </AlertDialog>
 
       {/* Reset Password Dialog */}
+      {/* Reset Password Dialog */}
       <Dialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <KeyRound className="w-5 h-5" />
-              Reset Password
+              <Key className="w-5 h-5" />
+              Ubah Password Admin
             </DialogTitle>
             <DialogDescription>
-              Kirim email reset password ke <strong>{selectedAdmin?.email}</strong>
+              Ubah password untuk <strong>{selectedAdmin?.full_name || selectedAdmin?.email}</strong>
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground">
-              Link reset password akan dikirim ke email admin. Admin dapat menggunakan link tersebut untuk mengatur password baru.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsResetPasswordOpen(false)} disabled={isSubmitting}>
-              Batal
-            </Button>
-            <Button onClick={() => handleResetPassword({ newPassword: '', confirmPassword: '' })} disabled={isSubmitting}>
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <KeyRound className="w-4 h-4 mr-2" />
-              )}
-              Kirim Email Reset
-            </Button>
-          </DialogFooter>
+          <Form {...directResetPasswordForm}>
+            <form onSubmit={directResetPasswordForm.handleSubmit(handleDirectResetPassword)} className="space-y-4">
+              <FormField
+                control={directResetPasswordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password Baru</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={directResetPasswordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Konfirmasi Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setIsResetPasswordOpen(false)} disabled={isSubmitting}>
+                  Batal
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Key className="w-4 h-4 mr-2" />
+                  )}
+                  Simpan Password
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </>

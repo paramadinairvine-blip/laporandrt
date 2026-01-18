@@ -167,14 +167,19 @@ export const AdminMenu = () => {
         }
       });
 
-      if (error) throw error;
-
-      if (result?.error) {
-        let message = result.error;
-        if (message.includes('already registered') || message.includes('already been registered')) {
+      // Handle edge function errors (including 400 responses)
+      const errorMessage = error?.message || result?.error;
+      if (errorMessage) {
+        let message = errorMessage;
+        if (message.toLowerCase().includes('already') && message.toLowerCase().includes('registered')) {
           message = 'Email sudah terdaftar';
         }
         toast({ title: 'Gagal Membuat Admin', description: message, variant: 'destructive' });
+        return;
+      }
+
+      if (!result?.success) {
+        toast({ title: 'Gagal Membuat Admin', description: 'Terjadi kesalahan saat membuat akun', variant: 'destructive' });
         return;
       }
       
@@ -195,9 +200,13 @@ export const AdminMenu = () => {
       setIsAddAdminOpen(false);
       fetchAdmins();
     } catch (error: any) {
+      let message = error?.message || 'Terjadi kesalahan saat membuat akun';
+      if (message.toLowerCase().includes('already') && message.toLowerCase().includes('registered')) {
+        message = 'Email sudah terdaftar';
+      }
       toast({
         title: 'Gagal Membuat Admin',
-        description: error.message || 'Terjadi kesalahan saat membuat akun',
+        description: message,
         variant: 'destructive'
       });
     } finally {

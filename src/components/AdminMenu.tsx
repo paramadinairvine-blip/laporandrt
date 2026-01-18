@@ -158,36 +158,48 @@ export const AdminMenu = () => {
   const handleAddAdmin = async (data: AddAdminFormData) => {
     setIsSubmitting(true);
     try {
-      // Create new user account
-      const { error: signUpError } = await signUp(data.email, data.password, data.fullName);
-      
-      if (signUpError) {
-        let message = 'Terjadi kesalahan saat membuat akun';
-        if (signUpError.message.includes('already registered')) {
+      // Create new user account using Supabase Admin API via edge function
+      const { data: result, error } = await supabase.functions.invoke('create-admin-user', {
+        body: {
+          email: data.email,
+          password: data.password,
+          fullName: data.fullName
+        }
+      });
+
+      if (error) throw error;
+
+      if (result?.error) {
+        let message = result.error;
+        if (message.includes('already registered') || message.includes('already been registered')) {
           message = 'Email sudah terdaftar';
         }
         toast({ title: 'Gagal Membuat Admin', description: message, variant: 'destructive' });
         return;
       }
-
-      // Note: The new user will need to be manually assigned admin role
-      // This is because we can't get the new user's ID immediately after signup
       
       // Log admin action
       await logAdminAction({
         action: 'add_admin',
         target_type: 'admin',
+        target_id: result?.userId,
         details: { email: data.email, name: data.fullName }
       });
 
       toast({ 
         title: 'Akun Admin Berhasil Dibuat', 
-        description: `Akun untuk ${data.email} telah dibuat. Admin perlu menambahkan role admin secara manual di database.` 
+        description: `Akun admin untuk ${data.email} telah dibuat dengan role admin.` 
       });
       
       addAdminForm.reset();
       setIsAddAdminOpen(false);
       fetchAdmins();
+    } catch (error: any) {
+      toast({
+        title: 'Gagal Membuat Admin',
+        description: error.message || 'Terjadi kesalahan saat membuat akun',
+        variant: 'destructive'
+      });
     } finally {
       setIsSubmitting(false);
     }
